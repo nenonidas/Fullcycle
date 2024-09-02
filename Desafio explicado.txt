@@ -1,0 +1,28 @@
+# Use a imagem base do Go 1.21 com Alpine Linux para construir a aplicação.
+# Nomeamos essa etapa como "builder" para referência posterior.
+FROM golang:1.21-alpine as builder
+
+# Defina o diretório de trabalho dentro do contêiner para /go/src/app.
+# Todos os comandos subsequentes serão executados a partir deste diretório.
+WORKDIR /go/src/app
+
+# Copie o arquivo main.go do diretório atual no host para o diretório de trabalho no contêiner.
+COPY main.go .
+
+# Compile o código Go para gerar um binário executável.
+# O binário resultante será colocado no diretório de trabalho.
+RUN go build main.go
+
+# Inicie uma nova etapa com a base "scratch", que é uma imagem vazia.
+# Isso cria uma imagem final mínima contendo apenas o binário compilado.
+FROM scratch
+
+# Defina o diretório de trabalho para /app no novo contêiner.
+WORKDIR /app
+
+# Copie o binário compilado da etapa "builder" para o diretório de trabalho /app.
+COPY --from=builder /go/src/app /app
+
+# Defina o comando padrão a ser executado quando o contêiner iniciar.
+# Nesse caso, ele executa o binário "main".
+CMD ["./main"]
